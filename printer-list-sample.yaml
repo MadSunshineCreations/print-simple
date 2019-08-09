@@ -1,0 +1,7 @@
+---
+- name: Printer 1
+  url: https://p1.localhost/
+  api_key: ABC123
+- name: Printer 2
+  url: ttps://p2.localhost/
+  api_key: ABC321
