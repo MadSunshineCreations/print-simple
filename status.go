@@ -6,17 +6,31 @@ import (
 )
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
-	var printers = readConfig()
-	dashboard.Printers = printers
+	var printers = dashboard.Printers
 
+	var wg sync.WaitGroup
+	wg.Add(len(Printers))
 	for i := 0; i < len(printers); i++ {
-		printers[i].getConnectionInfo()
-		printers[i].getTemperatureInfo()
+		go func() {
+			printers[i].getSettings()
+			printers[i].getConnectionInfo()
+			printers[i].getTemperatureInfo()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	// Load Job info if Printing
+	for i := 0; i < len(printers); i++ {
 		fillDashboardPorts(&printers[i])
+		if printers[i].Connection.State == "Printing" {
+			printers[i].getJobInfo()
+		}
 	}
 
 	json.NewEncoder(w).Encode(dashboard)
 }
+
+func 
 
 func fillDashboardPorts(p *Printer) {
 	for i := 0; i < len(p.Connection.AvailablePorts); i++ {

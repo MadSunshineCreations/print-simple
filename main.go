@@ -24,7 +24,7 @@ type Port struct {
 var dashboard = Dashboard{}
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
+	fmt.Fprintf(w, "Ready to Print!")
 }
 
 func readConfig() []Printer {
@@ -33,12 +33,17 @@ func readConfig() []Printer {
 	printers := []Printer{}
 	yaml.Unmarshal([]byte(data), &printers)
 
-	fmt.Printf("--- Printers:\n%v\n\n", printers)
 	return printers
 }
 
 func main() {
+	fmt.Printf("Loading Printers from Config\n")
+	var printers = readConfig()
+	dashboard.Printers = printers
+	fmt.Printf("Loaded!\n")
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/status/", statusHandler)
+	fmt.Printf("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+
 }
