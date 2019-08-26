@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 )
@@ -13,7 +12,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	var wg sync.WaitGroup
 	wg.Add(len(printers))
 	for i := 0; i < len(printers); i++ {
-		fmt.Printf("%+v\n", printers[i])
+		// fmt.Printf("%+v\n", printers[i])
 		go func(p *Printer) {
 			p.getSettings()
 			p.getConnectionInfo()

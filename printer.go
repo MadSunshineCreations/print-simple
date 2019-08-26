@@ -78,13 +78,14 @@ func (p *Printer) getSettings() {
 	}
 }
 
-func (p *Printer) connect() {
-	client := octoprint.NewClient("https://ender32.madsunshinecreations.com/", "9EDCA3B52DFC4B2AB18D6E8616E2D31B")
+func (p *Printer) connect(port string) {
+	client := octoprint.NewClient(p.URL, p.Apikey)
 	r := octoprint.ConnectionRequest{}
 	s, _ := r.Do(client)
 
 	if s.Current.State == "Closed" {
 		req := octoprint.ConnectRequest{}
+		req.Port = port
 		req.Do(client)
 	}
 }
