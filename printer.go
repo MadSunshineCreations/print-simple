@@ -11,6 +11,7 @@ type Printer struct {
 	Name       string `yaml:"name" json:"name"`
 	URL        string `yaml:"url" json:"-"`
 	Apikey     string `yaml:"api_key" json:"-"`
+	HostKey    string `yaml:"host_key" json:"-"`
 	Connection struct {
 		State          string   `json:"state"`
 		Port           string   `json:"port"`

@@ -19,6 +19,7 @@ type Dashboard struct {
 type Port struct {
 	Available bool   `json:"available"`
 	Name      string `json:"name"`
+	HostKey   string `json:"host"`
 }
 
 var dashboard = Dashboard{}
