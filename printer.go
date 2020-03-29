@@ -89,3 +89,45 @@ func (p *Printer) connect(port string) {
 		req.Do(client)
 	}
 }
+
+func (p *Printer) preheat(tool float64, bed float64) {
+	var bedTarget float64
+	client := octoprint.NewClient(p.URL, p.Apikey)
+
+	target := make(map[string]float64)
+
+	target["tool0"] = tool
+	bedTarget = bed
+	toolRequest := octoprint.ToolTargetRequest{target}
+	bedRequest := octoprint.BedTargetRequest{bedTarget}
+	toolRequest.Do(client)
+	bedRequest.Do(client)
+}
+
+func (p *Printer) extrude(amount int) {
+	client := octoprint.NewClient(p.URL, p.Apikey)
+
+	r := octoprint.ToolExtrudeRequest{amount}
+	r.Do(client)
+}
+
+func (p *Printer) cancel() {
+	client := octoprint.NewClient(p.URL, p.Apikey)
+
+	r := octoprint.CancelRequest{}
+	r.Do(client)
+}
+
+func (p *Printer) start() {
+	client := octoprint.NewClient(p.URL, p.Apikey)
+
+	r := octoprint.StartRequest{}
+	r.Do(client)
+}
+
+func (p *Printer) movez(amount int) {
+	client := octoprint.NewClient(p.URL, p.Apikey)
+
+	r := octoprint.PrintHeadJogRequest{0, 0, amount, false, 200}
+	r.Do(client)
+}
