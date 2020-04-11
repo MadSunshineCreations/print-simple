@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	octoprint "github.com/mark579/go-octoprint"
 )
@@ -12,6 +14,7 @@ type Printer struct {
 	URL        string `yaml:"url" json:"-"`
 	Apikey     string `yaml:"api_key" json:"-"`
 	HostKey    string `yaml:"host_key" json:"-"`
+	GcodeDir   string `yaml:"gcode_dir" json:"-"`
 	Connection struct {
 		State          string   `json:"state"`
 		Port           string   `json:"port"`
@@ -29,6 +32,7 @@ type Printer struct {
 		Loaded          bool   `json:"-"`
 		WebcamStreamURL string `json:"webcam_stream_url"`
 	} `json:"settings"`
+	Files []string `json:"files"`
 }
 
 func (p *Printer) getConnectionInfo() {
@@ -38,6 +42,21 @@ func (p *Printer) getConnectionInfo() {
 	p.Connection.State = string(s.Current.State)
 	p.Connection.Port = s.Current.Port
 	p.Connection.AvailablePorts = s.Options.Ports
+}
+
+func (p *Printer) loadGcodeFiles() {
+	p.Files = nil
+	err := filepath.Walk(p.GcodeDir, func(path string, info os.FileInfo, err error) error {
+		if path != p.GcodeDir {
+			p.Files = append(p.Files, path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		fmt.Println("Unable to load GCode Files")
+	}
 }
 
 func (p *Printer) getTemperatureInfo() {
@@ -129,5 +148,14 @@ func (p *Printer) movez(amount int) {
 	client := octoprint.NewClient(p.URL, p.Apikey)
 
 	r := octoprint.PrintHeadJogRequest{0, 0, amount, false, 200}
+	r.Do(client)
+}
+
+func (p *Printer) printFile(fileName string) {
+	client := octoprint.NewClient(p.URL, p.Apikey)
+
+	r := octoprint.UploadFileRequest{Location: octoprint.Local, Select: true, Print: true}
+	file, _ := os.Open(fileName)
+	r.AddFile(file.Name(), file)
 	r.Do(client)
 }

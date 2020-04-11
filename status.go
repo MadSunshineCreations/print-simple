@@ -7,13 +7,22 @@ import (
 )
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
+	dashboardMutex.Lock()
+	json.NewEncoder(w).Encode(dashboard)
+	dashboardMutex.Unlock()
+}
+
+func loadStatus() {
+	dashboardMutex.Lock()
 	var printers = dashboard.Printers
 
 	var wg sync.WaitGroup
 	wg.Add(len(printers))
 	for i := 0; i < len(printers); i++ {
-		// fmt.Printf("%+v\n", printers[i])
 		go func(p *Printer) {
+			if len(p.Files) == 0 {
+				p.loadGcodeFiles()
+			}
 			p.getSettings()
 			p.getConnectionInfo()
 			p.getTemperatureInfo()
@@ -28,8 +37,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 			printers[i].getJobInfo()
 		}
 	}
-
-	json.NewEncoder(w).Encode(dashboard)
+	dashboardMutex.Unlock()
 }
 
 func fillDashboardPorts(p *Printer) {
