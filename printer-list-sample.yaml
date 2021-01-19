@@ -3,7 +3,9 @@
   url: https://p1.localhost/
   api_key: ABC123
   host_key: 1
+  gcode_dir: './gcode/printer1'
 - name: Printer 2
   url: ttps://p2.localhost/
   api_key: ABC321
   host_key: 1
+  gcode_dir: './gcode/printer2'

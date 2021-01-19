@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -40,13 +42,20 @@ type JobRequest struct {
 	Operation   string `json:"operation"`
 }
 
-// MoveRequest is for operations that cancel or start a print
+// MoveRequest is for moving the extruder head
 type MoveRequest struct {
 	PrinterName string `json:"printer_name"`
 	Z           int    `json:"z"`
 }
 
+// PrintFileRequest is
+type PrintFileRequest struct {
+	PrinterName string `json:"printer_name"`
+	FileName    string `json:"file_name"`
+}
+
 var dashboard = Dashboard{}
+var dashboardMutex = &sync.Mutex{}
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Ready to Print!")
@@ -152,6 +161,25 @@ func movezHandler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(r)
 }
 
+func printFileHandler(w http.ResponseWriter, req *http.Request) {
+	var printers = dashboard.Printers
+
+	decoder := json.NewDecoder(req.Body)
+	var r PrintFileRequest
+	err := decoder.Decode(&r)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < len(printers); i++ {
+		if printers[i].Name == r.PrinterName {
+			printers[i].printFile(r.FileName)
+		}
+	}
+
+	json.NewEncoder(w).Encode(r)
+}
+
 func readConfig() []Printer {
 	data, _ := ioutil.ReadFile("printer-list.yaml")
 
@@ -172,6 +200,14 @@ func main() {
 	fmt.Printf("Loading Printers from Config\n")
 	var printers = readConfig()
 	dashboard.Printers = printers
+	//Start status loop
+	go func() {
+		for {
+			loadStatus()
+			time.Sleep(time.Second * 1)
+		}
+	}()
+
 	fmt.Printf("Loaded!\n")
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/status", statusHandler)
@@ -186,6 +222,8 @@ func main() {
 	http.HandleFunc("/job/", jobHandler)
 	http.HandleFunc("/movez", movezHandler)
 	http.HandleFunc("/movez/", movezHandler)
+	http.HandleFunc("/print_file/", printFileHandler)
+	http.HandleFunc("/print_file", printFileHandler)
 	fmt.Printf("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
