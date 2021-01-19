@@ -181,7 +181,7 @@ func printFileHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func readConfig() []Printer {
-	data, _ := ioutil.ReadFile("printer-list.yaml")
+	data, _ := ioutil.ReadFile("/etc/print-simple/printer-list.yaml")
 
 	printers := []Printer{}
 	yaml.Unmarshal([]byte(data), &printers)
