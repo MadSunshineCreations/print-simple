@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -198,6 +199,7 @@ func logRequest(handler http.Handler) http.Handler {
 }
 
 func main() {
+	log.SetOutput(os.Stdout)
 	fmt.Printf("Loading Printers from Config\n")
 	var printers = readConfig()
 	dashboard.Printers = printers
@@ -210,7 +212,9 @@ func main() {
 	}()
 
 	//Start even loop for files
-	watchFiles()
+	go func() {
+		watchFiles()
+	}()
 
 	fmt.Printf("Loaded!\n")
 	http.HandleFunc("/", rootHandler)
@@ -250,7 +254,7 @@ func watchFiles() {
 				if !ok {
 					return
 				}
-				if event.Op&fsnotify.Create == fsnotify.Create {
+				if event.Op&fsnotify.Write == fsnotify.Write {
 					//Trigger a full reload cause i'm lazy
 					log.Println("new file:", event.Name)
 					for i := 0; i < len(*printers); i++ {
@@ -267,6 +271,7 @@ func watchFiles() {
 		}
 	}(&printers)
 	for i := 0; i < len(printers); i++ {
+		log.Println("ADD Watch Directory:", printers[i].GcodeDir)
 		err = watcher.Add(printers[i].GcodeDir)
 		if err != nil {
 			log.Fatal(err)
