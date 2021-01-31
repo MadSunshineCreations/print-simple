@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -208,6 +209,9 @@ func main() {
 		}
 	}()
 
+	//Start even loop for files
+	watchFiles()
+
 	fmt.Printf("Loaded!\n")
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/status", statusHandler)
@@ -227,4 +231,46 @@ func main() {
 	fmt.Printf("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
+}
+
+func watchFiles() {
+	//Setup File System watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+	var printers = dashboard.Printers
+
+	done := make(chan bool)
+	go func(printers *[]Printer) {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Op&fsnotify.Create == fsnotify.Create {
+					//Trigger a full reload cause i'm lazy
+					log.Println("new file:", event.Name)
+					for i := 0; i < len(*printers); i++ {
+						(*printers)[i].loadGcodeFiles()
+					}
+
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Println("error:", err)
+			}
+		}
+	}(&printers)
+	for i := 0; i < len(printers); i++ {
+		err = watcher.Add(printers[i].GcodeDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	<-done
 }

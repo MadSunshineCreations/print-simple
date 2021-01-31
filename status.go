@@ -20,9 +20,9 @@ func loadStatus() {
 	wg.Add(len(printers))
 	for i := 0; i < len(printers); i++ {
 		go func(p *Printer) {
-			if len(p.Files) == 0 {
-				p.loadGcodeFiles()
-			}
+			// if len(p.Files) == 0 {
+			p.loadGcodeFiles()
+			// }
 			p.getSettings()
 			p.getConnectionInfo()
 			p.getTemperatureInfo()
