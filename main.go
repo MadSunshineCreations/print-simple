@@ -246,6 +246,10 @@ func watchFiles() {
 	defer watcher.Close()
 	var printers = dashboard.Printers
 
+	for i := 0; i < len(printers); i++ {
+		(printers)[i].loadGcodeFiles()
+	}
+
 	done := make(chan bool)
 	go func(printers *[]Printer) {
 		for {
