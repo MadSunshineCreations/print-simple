@@ -102,6 +102,7 @@ func preheatHandler(w http.ResponseWriter, req *http.Request) {
 				printers[i].preheat(200, 60)
 			case 2:
 				printers[i].preheat(220, 60)
+			}
 		}
 	}
 
