@@ -36,6 +36,7 @@ type ConnectRequest struct {
 // PrinterRequest is for requests that only require the printer name
 type PrinterRequest struct {
 	PrinterName string `json:"printer_name"`
+	HeatLevel   int    `json:"heat_level"`
 }
 
 // JobRequest is for operations that cancel or start a print
@@ -94,7 +95,13 @@ func preheatHandler(w http.ResponseWriter, req *http.Request) {
 
 	for i := 0; i < len(printers); i++ {
 		if printers[i].Name == r.PrinterName {
-			printers[i].preheat(200, 60)
+			switch level := r.HeatLevel; level {
+			case 0:
+				printers[i].preheat(0, 0)
+			case 1:
+				printers[i].preheat(200, 60)
+			case 2:
+				printers[i].preheat(220, 60)
 		}
 	}
 
